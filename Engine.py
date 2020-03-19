@@ -129,10 +129,9 @@ class Engine(Frame):
             self.create_poly(triangle)
 
     '''
-    @param points: array of points in the form of [(x, y, z), (x, y, z) , (x, y, z)]
     to sort arrays in a way to make the ones closer to the camera are the last to be rendered
     '''
-    def sort_3d_points(self):
+    def sort_vertices(self):
         global mem_points, mem_polies, mem_vertices, method
         mem_vertices = []
         count = 0
@@ -261,6 +260,6 @@ class Engine(Frame):
     def render(self):
         global canvas
         canvas.delete("all")
-        self.sort_3d_points()
+        self.sort_vertices()
         self.vertices_reset()
         self.master.update()
