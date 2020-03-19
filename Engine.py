@@ -4,11 +4,19 @@ import math
 canvas = ""
 height = 800
 width = 1000
-distance = 5
+distance = 8
 scale = 250
 
 mem_points = []
 mem_polies = []
+mem_vertices = []
+
+# colud be "avg", "closer" or "none", this is used to sort which vertices to render above which
+method = "avg"
+
+# can be green, yellow, blue or any color you want. you can even hex colors. "" for no color
+face_color = ""
+edge_color = "black"
 
 
 class Engine(Frame):
@@ -110,26 +118,56 @@ class Engine(Frame):
     used to redraw all the vertices
     '''
     def vertices_reset(self):
-        global mem_points, mem_polies
-        coordinates = []
+        global mem_vertices
 
-        for point in mem_points:
-            coordinates.append(self.coordinator_3D(point))
+        for poly_0 in mem_vertices:
+            triangle = []
+            for poly_1 in poly_0:
+                poly_1 = self.coordinator_3D(poly_1)
+                triangle.append(poly_1[0])
+                triangle.append(poly_1[1])
+            self.create_poly(triangle)
 
-        for poly in mem_polies:
-            self.create_poly((coordinates[poly[0]], coordinates[poly[1]], coordinates[poly[2]]))
+    '''
+    @param points: array of points in the form of [(x, y, z), (x, y, z) , (x, y, z)]
+    to sort arrays in a way to make the ones closer to the camera are the last to be rendered
+    '''
+    def sort_3d_points(self):
+        global mem_points, mem_polies, mem_vertices, method
+        mem_vertices = []
+        count = 0
+        while count < len(mem_polies):
+            if method == "none":
+                mem_vertices.append([mem_points[mem_polies[count][0]], mem_points[mem_polies[count][1]], mem_points[mem_polies[count][2]]])
+            if method == "avg":
+                avg = mem_points[mem_polies[count][0]][2] + mem_points[mem_polies[count][1]][2] + mem_points[mem_polies[count][2]][2]
+                avg = avg / 3
+                mem_vertices.append([mem_points[mem_polies[count][0]], mem_points[mem_polies[count][1]], mem_points[mem_polies[count][2]], avg])
+            if method == "closer":
+                closer = mem_points[mem_polies[count][0]][2]
+                if mem_points[mem_polies[count][1]][2] > closer:
+                    closer = mem_points[mem_polies[count][1]][2]
+                if mem_points[mem_polies[count][2]][2] > closer:
+                    closer = mem_points[mem_polies[count][2]][2]
+
+                mem_vertices.append([mem_points[mem_polies[count][0]], mem_points[mem_polies[count][1]],mem_points[mem_polies[count][2]], closer])
+            count = count + 1
+        if method != "none":
+            mem_vertices.sort(key=lambda x: x[3], reverse = True)
+            for higher in mem_vertices:
+                higher.pop(3)
+
+
 
     '''
     @param points: array of coordinates in the form of [(x, y), (x, y) , (x, y)] representing a polly
     to create a single poly
     '''
     def create_poly(self, points):
-        global canvas
-        a, b, c = points[0], points[1], points[2]
-        coordinates = [a[0], a[1], b[0], b[1], c[0], c[1]]
+        global canvas, face_color, edge_color
         if canvas == "":
             canvas = Canvas(self)
-        canvas.create_polygon(coordinates, fill="", outline="black")
+        canvas.create_polygon(points, fill=face_color, outline=edge_color)
 
     '''
     @param points: array of coordinates in the form of [x, y, z]
@@ -223,5 +261,6 @@ class Engine(Frame):
     def render(self):
         global canvas
         canvas.delete("all")
+        self.sort_3d_points()
         self.vertices_reset()
         self.master.update()
