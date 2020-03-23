@@ -1,15 +1,16 @@
-from Engine import *
+from Simple3DEngine.Engine import Engine
 
 
 def main():
     root = Engine()
 
-    root.import_ply('monkey.ply')
-
-    root.rotate_x(12)
-
+    object_1 = root.add_object('coords/monkey.ply', 'a monkey!')
+    object_1.face_color = "green"
+    object_1.edge_color = "black"
+    object_1.rotate_x(12)
+    camera = root.get_camera()
     while True:
-        root.rotate_y(0.4)
+        camera.rotate_y(1)
         root.render()
 
 
